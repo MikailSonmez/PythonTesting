@@ -1,39 +1,48 @@
+import pytest
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 
 from royale.pages.base.card_details_page import CardDetailsPage
 from royale.pages.cards_page import CardsPage
+from royale.services import card_service
+
+cards = card_service.get_all_cards()
 
 
-def test_ice_spirit_is_displayed():
+@pytest.mark.parametrize('api_card', cards)
+def test_card_is_displayed(api_card):  # EARTHQUAKE
     driver = webdriver.Chrome()
     driver.get('https://statsroyale.com')
 
     cards_page = CardsPage(driver).goto()
-    ice_spirit = cards_page.get_card_by_name('Ice Spirit')
-    assert ice_spirit.is_displayed()
+    card_on_page = cards_page.get_card_by_name(api_card.name)
+    assert card_on_page.is_displayed()
 
 
-def test_ice_spirit_details_displayed():
+@pytest.mark.parametrize('api_card', cards)
+def test_ice_spirit_details_displayed(api_card):
     driver = webdriver.Chrome()
 
-    # 1. go to statsroyale.com
     driver.get('https://statsroyale.com')
 
-    # 2. go to cards page
-    # 3. assert Ice Spirit is displayed
-    CardsPage(driver).goto().get_card_by_name('Ice Spirit').click()
+    CardsPage(driver).goto().get_card_by_name(api_card.name).click()
 
-    # 4. get the card, name, type. arena, and rarity
-    details_page = CardDetailsPage(driver)
-    card_name = details_page.map.card_name.text
-    split = details_page.map.card_category.text.split(', ')
-    card_type = split[0]
-    card_arena = split[1]
-    card_rarity = details_page.map.card_rarity.text.split('\n')[1]
+    card = CardDetailsPage(driver).get_base_card()
 
-    # 5. assert they are correct
-    assert card_name == 'Ice Sprit'
-    assert card_type == 'Troop'
-    assert card_arena == 'Arena 8'
-    assert card_rarity == 'Common'
+    assert card.name == api_card.name
+    assert card.type == api_card.type
+    assert card.arena == api_card.arena
+    assert card.rarity == api_card.rarity
+
+
+def test_mirror_spirit_details_displayed():
+    driver = webdriver.Chrome()
+    driver.get('https://statsroyale.com')
+
+    CardsPage(driver).goto().get_card_by_name('Mirror').click()
+
+    card = CardDetailsPage(driver).get_base_card()
+
+    assert card.name == 'Mirror'
+    assert card.type == 'Spell'
+    assert card.arena == 12
+    assert card.rarity == 'Epic'
